@@ -1,0 +1,695 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Avaliação de algoritmos"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 100,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "\n",
+    "from sklearn.metrics import accuracy_score, confusion_matrix\n",
+    "from sklearn.model_selection import StratifiedKFold\n",
+    "from sklearn.model_selection import cross_val_score\n",
+    "\n",
+    "from sklearn.tree import DecisionTreeClassifier\n",
+    "from sklearn.naive_bayes import GaussianNB\n",
+    "from sklearn.linear_model import LogisticRegression\n",
+    "from sklearn.svm import SVC\n",
+    "from sklearn.neighbors import KNeighborsClassifier\n",
+    "from sklearn.ensemble import RandomForestClassifier\n",
+    "from sklearn.neural_network import MLPClassifier\n",
+    "\n",
+    "import warnings\n",
+    "warnings.filterwarnings(\"ignore\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 74,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>clientid</th>\n",
+       "      <th>income</th>\n",
+       "      <th>age</th>\n",
+       "      <th>loan</th>\n",
+       "      <th>default</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>-1.731185</td>\n",
+       "      <td>1.453934</td>\n",
+       "      <td>1.365380</td>\n",
+       "      <td>1.202819</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>-1.729453</td>\n",
+       "      <td>-0.762176</td>\n",
+       "      <td>0.542659</td>\n",
+       "      <td>0.696427</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>-1.727721</td>\n",
+       "      <td>0.836821</td>\n",
+       "      <td>1.674171</td>\n",
+       "      <td>1.174711</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>-1.725989</td>\n",
+       "      <td>-0.183070</td>\n",
+       "      <td>0.364136</td>\n",
+       "      <td>0.544980</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>-1.724257</td>\n",
+       "      <td>1.509563</td>\n",
+       "      <td>-1.686475</td>\n",
+       "      <td>1.420765</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   clientid    income       age      loan  default\n",
+       "0 -1.731185  1.453934  1.365380  1.202819        0\n",
+       "1 -1.729453 -0.762176  0.542659  0.696427        0\n",
+       "2 -1.727721  0.836821  1.674171  1.174711        0\n",
+       "3 -1.725989 -0.183070  0.364136  0.544980        0\n",
+       "4 -1.724257  1.509563 -1.686475  1.420765        1"
+      ]
+     },
+     "execution_count": 74,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Load\n",
+    "classes = pd.read_csv('../data/classes.csv')\n",
+    "previsores = pd.read_csv('../data/previsores.csv')\n",
+    "df = previsores.join(classes)\n",
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.9255000000000001"
+      ]
+     },
+     "execution_count": 6,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "classificador = GaussianNB()\n",
+    "classes = classes.values.ravel()\n",
+    "\n",
+    "resultados = cross_val_score(classificador, previsores, classes, cv = 10)\n",
+    "resultados.mean()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.925"
+      ]
+     },
+     "execution_count": 7,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "kfold = StratifiedKFold(n_splits = 10, shuffle = True, random_state = 3)\n",
+    "resultados = []\n",
+    "matrizes = []\n",
+    "for indice_treinamento, indice_teste in kfold.split(previsores,\n",
+    "                                                    np.zeros(shape=(previsores.shape[0], 1))):\n",
+    "#     print('Índice treinamento: ', indice_treinamento, 'Índice teste: ', indice_teste)\n",
+    "    classificador = GaussianNB()\n",
+    "    classificador.fit(previsores.iloc[indice_treinamento], classes[indice_treinamento]) \n",
+    "    previsoes = classificador.predict(previsores.iloc[indice_teste])\n",
+    "    precisao = accuracy_score(classes[indice_teste], previsoes)\n",
+    "    resultados.append(precisao)\n",
+    "\n",
+    "resultados = np.asarray(resultados)\n",
+    "resultados.mean()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Planilha de testes\n",
+    "\n",
+    "Fazer a média de cada cross validation com 10 *folds*\n",
+    "Fazer a média das médias de 30 execuções do k-fold para comparar os classificadores"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[0.925,\n",
+       " 0.9235,\n",
+       " 0.9265000000000001,\n",
+       " 0.925,\n",
+       " 0.9259999999999999,\n",
+       " 0.9265000000000001,\n",
+       " 0.9265000000000001,\n",
+       " 0.925,\n",
+       " 0.9260000000000002,\n",
+       " 0.9260000000000002,\n",
+       " 0.924,\n",
+       " 0.9260000000000002,\n",
+       " 0.9260000000000002,\n",
+       " 0.9259999999999999,\n",
+       " 0.9280000000000002,\n",
+       " 0.9255000000000001,\n",
+       " 0.9255000000000001,\n",
+       " 0.9269999999999999,\n",
+       " 0.9245000000000001,\n",
+       " 0.9270000000000002,\n",
+       " 0.9259999999999999,\n",
+       " 0.924,\n",
+       " 0.9275,\n",
+       " 0.9265000000000001,\n",
+       " 0.9254999999999999,\n",
+       " 0.9245000000000001,\n",
+       " 0.9259999999999999,\n",
+       " 0.9270000000000002,\n",
+       " 0.9245000000000001,\n",
+       " 0.9245000000000001]"
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "classificador = GaussianNB()\n",
+    "#classificador = DecisionTreeClassifier()\n",
+    "#classificador = LogisticRegression()\n",
+    "#classificador = SVC(kernel = 'rbf', random_state = 1, C = 2.0)\n",
+    "#classificador = KNeighborsClassifier(n_neighbors=5, metric='minkowski', p = 2)\n",
+    "#classificador = RandomForestClassifier(n_estimators=40, criterion='entropy', random_state=0)\n",
+    "# classificador = MLPClassifier(verbose = True, max_iter = 1000,\n",
+    "#                       tol = 0.000010, solver='adam',\n",
+    "#                       hidden_layer_sizes=(100), activation = 'relu',\n",
+    "#                       batch_size=200, learning_rate_init=0.001)\n",
+    "\n",
+    "\n",
+    "resultados30 = []\n",
+    "for i in range(30):\n",
+    "    kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state = i)\n",
+    "    resultados1 = []\n",
+    "    for indice_treinamento, indice_teste in kfold.split(previsores, np.zeros(shape=(classes.shape[0], 1))):\n",
+    "        classificador.fit(previsores.iloc[indice_treinamento], classes[indice_treinamento])\n",
+    "        previsoes = classificador.predict(previsores.iloc[indice_teste])\n",
+    "        precisao = accuracy_score(classes[indice_teste], previsoes)\n",
+    "        resultados1.append(precisao)\n",
+    "    resultados1 = np.asarray(resultados1)\n",
+    "    media = resultados1.mean()\n",
+    "    resultados30.append(media)\n",
+    "\n",
+    "resultados30"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Ranking dos resultados\n",
+    "\n",
+    "Fazer teste para verificar se os resultados possuem diferença estatística significativa\n",
+    "Verificar para cada seed (de 1 a 30) o ranking dos algoritmos."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Naive Bayes</th>\n",
+       "      <th>Árvore</th>\n",
+       "      <th>Random Forest</th>\n",
+       "      <th>Regras</th>\n",
+       "      <th>kNN</th>\n",
+       "      <th>Logística</th>\n",
+       "      <th>SVM</th>\n",
+       "      <th>RNA</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>8</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>5</td>\n",
+       "      <td>7</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>8</td>\n",
+       "      <td>3.5</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>5</td>\n",
+       "      <td>7</td>\n",
+       "      <td>3.5</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>8</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>5</td>\n",
+       "      <td>7</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>8</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>5</td>\n",
+       "      <td>7</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>8</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>6</td>\n",
+       "      <td>5</td>\n",
+       "      <td>7</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   Naive Bayes  Árvore  Random Forest  Regras  kNN  Logística  SVM  RNA\n",
+       "0            8     4.0            2.0       6    5          7  3.0    1\n",
+       "1            8     3.5            2.0       6    5          7  3.5    1\n",
+       "2            8     2.0            3.0       6    5          7  4.0    1\n",
+       "3            8     4.0            3.0       6    5          7  2.0    1\n",
+       "4            8     3.0            2.0       6    5          7  4.0    1"
+      ]
+     },
+     "execution_count": 15,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "ranking = pd.read_csv('../data/ranking.csv')\n",
+    "ranking.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Em R:\n",
+    "\n",
+    "# dados <- read.csv(\"<path do arquivo>\")\n",
+    "# matriz <- as.matrix(dados)\n",
+    "# TStools::nemenyi(matriz,conf.int=0.95, plottype=\"vline\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 54,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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Oj11JjU1VS6XSxs3bpSfn1+tjl1tutzuAPXBiRMn5HQ6lZubq6CgIA0YMKDC9s6dO6tHjx568803KzyfkZGhfv36yc/PT/Hx8frb3/6muXPnytfX95yvlZSUpLy8vEq3efIXGgAAuDh+fn6Ki4urdFvbtm21YMGC856jefPmuu+++5SSklKhLxw8eFCJiYnKz8/Xr7/+qsDAwLOOTUxM1JIlS9SvXz+lp6dr3LhxKioq0qeffqqEhAT3fr/88kulr52YmKh//vOfMsZo/Pjx+sc//qHk5ORzvvYDDzyg2267TZMmTdIrr7yi+++/X9LpEr5nzx73eY8fP66ioiL17t1bjz32mO6++26NGDFC7du3P+942IXiXQt+m+NdUlKiQYMGKTU1VY888kiFfZ5++mmNHDlSffv2dT+XlpamrKwsderUSZJ0+PBhrVu37qzi/nsX8s0FAADqj2XLltXKeSZNmqTIyEh3kZWkhx9+WI899piGDRumzMzMSj90OWzYMD399NM6cuSIsrOz1b9/fxUXF6tFixZyuVwX/Po+Pj4aOnSo5s+fr+Tk5HO+docOHXTVVVdp3bp1+vzzz93vfp86dUqbN2/WFVdcUeG8ycnJGjJkiD744AP17t1bH374obp27Vr9AbIAU01qUePGjZWSkqJZs2aprKyswrauXbsqODhYK1eulHT6p7SNGzfq+++/V05OjnJycpSamsp0EwAAcEm0bNlSd9xxhxYuXOh+rqCgQO3atZOkc34erWnTpoqOjtbEiRMVFxcnX19fNW/eXIGBge4fCowx2rFjx3kzZGVl6brrrjvva48dO1b33HOPEhIS3DMBBg4cWGGluN9K/9dff62wsDBNmTJF0dHR551rbieKdy2LiIiQw+GotEA/88wzOnjwoCTp7bffVv/+/dWoUSP39ttuu00rV648569qAAAAauLxxx+vsLrJtGnTlJCQoKioKLVq1eqcxyUmJuqNN95QYmKi+7nFixdr4cKFCg8PV0hIiN59991Kj/1tjrfD4dD27dv17LPPnve1hw0bpqKiogrvzqekpGjr1q1yOBwKDg7Wyy+/LEmaO3euQkND5XA41KBBA91yyy3VHxiL+BjWsANqRVxcnDIyMuyOccl5wnV6QgZvxvhXH2NWNcYHZ9q6daseffRRbdy40e4otYo53gAAAPAY06dP10svveSe212fMNUEAAAAHiM5OVnfffedYmJi7I5S6yjeAAAAgAUo3gAAAIAFKN4AAAA4r5ycnLNuBojqsbR4+/r6yul0KjQ0VEOHDtWxY8dq5byLFi3ShAkTauVcvxcbG6sbbrhBTqdTTqdTy5cvr/XXkPhCBgAAl07Tpk1rfI7y8nKNHz9eUVFRlW4/s8ts3br1rJsJwuLi/dsdHnfv3q2WLVsqNTXVype/KIsXL5bL5ZLL5dLIkSMv6Jgzb55zPhRvAADgyb766itNmTJFN9xwQ6Xbz+wy3bp1U0pKilXx6gzbppr06tVLubm5kqTPP/9cvXr1UkREhG688Ubt27dP0ul3skeMGKHBgwfr+uuv15NPPuk+/tVXX1WXLl3UvXt3ffLJJ+7nc3Jy1L9/fzkcDt188836/vvvJUljxozRQw89pJ49e6pz587KzMzUAw88oKCgII0ZM+aCcx85ckS33367HA6HevbsqZ07d0o6vQj8vffeq969e+vee+/VoUOHFB8fr+joaEVHR7szbtiwwf0OekREhAoLC5WcnKyNGzfK6XRqzpw5NRpXAACA83G5XOrZs6ccDoeGDx+uo0ePSpK2bNkih8Mhp9OpyZMnKzQ0VJKUn5+vGTNmSLqwLpOZmam4uDhJct8IJywsTA6HQ2+99ZYk6aGHHlK3bt0UEhKi5557zoZRsIGxUJMmTYwxxpSVlZmRI0eaVatWGWOMKSgoMKWlpcYYY1avXm1GjBhhjDHm1VdfNYGBgebYsWPmxIkTpmPHjub77783eXl5pkOHDuann34yv/zyi7nxxhvN+PHjjTHGxMXFmUWLFhljjFm4cKG57bbbjDHGjB492iQmJppTp06Zd955xzRr1szs3LnTlJeXm8jISLN9+/az8vbt29d06dLFhIeHm/DwcPPzzz+bCRMmmGnTphljjFm7dq0JDw83xhjz3HPPmcjISFNSUmKMMWbUqFFm48aNxhhjvvvuO9O1a1d3vqysLGOMMYWFhaa0tNSsX7/eDBkypDaHGjbwlr9DT7hOT8jgzRj/6mPMqsb4XFq/9a/fCwsLM5mZmcYYY5599lkzceJEY4wxISEh5tNPPzXGGDNlyhQTEhJijDEVusqFdJnfP37yySfd5zfGmCNHjhhjjDl8+LAx5nQv7Nu3r9mxY0ftXbSHsvQGOidOnJDT6VRubq6CgoI0YMAASVJBQYFGjx6tL7/8Uj4+PiotLXUfc/PNN8vf31+SFBwcrO+++04///yzYmNj1bp1a0mnb2O6f/9+SdKmTZu0YsUKSdK9995b4V3yoUOHysfHR2FhYbrqqqsUFhYmSQoJCVFOTo6cTudZmRcvXqxu3bq5H2dlZbl/Uuvfv78OHz6s48ePSzp9e1M/Pz9J0po1a7Rnzx73ccePH1dRUZF69+6txx57THfffbdGjBih9u3bV2sMk5KSlJeXV61jYI3f/u4BANXj5+fnfncU1dO2bVstWLCgWscUFBTo2LFj6tu3ryRp9OjRSkhI0LFjx1RYWKhevXpJku66665K7yha3S6zZs0apaenux8HBARIkpYuXaoFCxaorKxM+fn52rNnjxwOR7Wupa6xtHj/Nse7pKREgwYNUmpqqh555BE9++yz6tevn95++23l5OQoNjbWfUyjRo3cf/b19a32/Onf++1cl112WYXzXnbZZTU672+aNGni/vOpU6e0efNmXXHFFRX2SU5O1pAhQ/TBBx+od+/e+vDDD6v1GtX95gIAwNMtW7bM7giohpp2GUn69ttvNXPmTG3ZskUBAQEaM2aMTp48eQnSehZb5ng3btxYKSkpmjVrlsrKylRQUKB27dpJOj2v+3x69OihDRs26PDhwyotLa3wDXvjjTe6f6pavHix+vTpU6vZ+/Tp476FaWZmplq1aqXmzZuftd/AgQM1f/5892OXyyVJ+vrrrxUWFqYpU6YoOjpae/fuVbNmzVRYWFirOQEAACrj7++vgIAAbdy4UZL0+uuvq2/fvmrRooWaNWumzz77TJIqvEv9e9XtMgMGDKiwoMbRo0d1/PhxNWnSRP7+/vrxxx+1atWqWr5Kz2TbhysjIiLkcDiUlpamJ598Uk899ZQiIiIu6J3na665RtOmTVOvXr3Uu3dvBQUFubfNnz9fr776qhwOh15//XXNmzevVnNPmzZN2dnZcjgcSk5O1muvvVbpfikpKdq6dascDoeCg4P18ssvS5Lmzp2r0NBQORwONWjQQLfccoscDod8fX0VHh7OhysBAECtKikpUfv27d3/zZ49W6+99pomT54sh8Mhl8ul//u//5MkLVy4UH/605/kdDpVXFzsnu77e9XtMlOnTtXRo0cVGhqq8PBwrV+/XuHh4YqIiFDXrl111113qXfv3paMhd18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GjVqlHx9fXXVVVepb9++2rJli5o3b17h+I8++kg7d+7U8uXLJUkFBQX68ssv3dvPJSkpSXl5eZfw6gHP5+fnZ3cEr+bn56e4uDi7YwCQ1LZtWy1YsKDKfQ4dOqTbbrtNK1asUHBwsHsu90033SRJ51zBberUqXr++ef197//vVYzezOK9xmOHDmidevWadeuXfLx8VF5ebl8fHw0ZMgQNWnSpMK+CQkJWr58uX744QclJiae99y/P94Yo/nz52vQoEHVyne+by4AuNSWLVtmdwQA1eDv76+OHTsqKytLwcHBFbb99q735ZefXQn79z1Gkb0AAAHOSURBVO+vqVOnavPmzVZFrfeYanKG5cuX695779V3332nnJwcHThwQIGBgdq4ceNZ+yYmJio9PV3Lly9XQkKCpNN3e1qyZInKy8t16NAhffzxx+revftZxw4aNEgvvfSSSktLJUn79+9XcXHxpb04AADgdRo2bKi3335b//nPf/Tmm29W2DZw4EAdPXpUO3furPTYqVOnasaMGVbE9AoU7zOkpaVp+PDhFZ6Lj4+vdHWTkJAQFRYWql27drrmmmskScOHD5fD4VB4eLj69++vGTNm6Oqrrz7r2LFjxyo4OFiRkZEKDQ3Vn//8Z1Y7AQAAl0STJk2UkZGhOXPm6Pjx4xW2PfPMMzpw4EClx916661q3bq1FRG9go8xxtgdAgAAAKjveMcbAAAAsADFGwAAALAAxRsAAACwAMUbAAAAsADFGwAAALAAxRsAAACwAMUbAAAAsADFGwAAALAAxRsAAACwAMUbAAAAsADFGwAAALAAxRsAAACwAMUbAAAAsADFGwAAALAAxRsAAACwAMUbAAAAsADFGwAAALAAxRsAAACwAMUbAAAAsADFGwAAALAAxRsAAACwAMUbAAAAsADFGwAAALAAxRsAAACwwP8DcEni0Yh1BZ0AAAAASUVORK5CYII=\n",
+      "text/plain": [
+       "<Figure size 720x176.4 with 1 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "import Orange\n",
+    "import matplotlib.pyplot as plt\n",
+    "# fig = plt.Figure(figsize=(10,10))\n",
+    "\n",
+    "names = ranking.columns\n",
+    "avranks =  ranking.mean(axis = 0) \n",
+    "cd = Orange.evaluation.scoring.compute_CD(avranks, 30) #tested on 30 datasets\n",
+    "Orange.evaluation.scoring.graph_ranks(avranks, names, cd, width=10, height=10, textspace=1.5)\n",
+    "plt.Figure(figsize=(16,16))\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Se a subtração do rank (avranks) entre dois algoritmos for maior do que o valor de cd, então um é estatísticamente mais eficiente do que o outro\n",
+    "\n",
+    "No grafico graph_ranks os algoritmos conectados pela linha não possuem diferença estatística (ex: RNA e Rforest)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 52,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "1.9168961904746955\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "Naive Bayes      8.000000\n",
+       "Árvore           3.600000\n",
+       "Random Forest    2.333333\n",
+       "Regras           6.000000\n",
+       "kNN              4.933333\n",
+       "Logística        7.000000\n",
+       "SVM              3.133333\n",
+       "RNA              1.000000\n",
+       "dtype: float64"
+      ]
+     },
+     "execution_count": 52,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "print(cd)\n",
+    "avranks"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Salvando o classificador"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 75,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.model_selection import train_test_split\n",
+    "previsores.drop('clientid', axis=1, inplace=True)\n",
+    "X_train, X_test, y_train, y_test = train_test_split(previsores, classes, test_size=0.25, random_state=0)\n",
+    "y_train = y_train.values.ravel()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 105,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pickle\n",
+    "\n",
+    "classificador = RandomForestClassifier(n_estimators=40, criterion='entropy', random_state=0)\n",
+    "classificador.fit(X_train, y_train)\n",
+    "pickle.dump(classificador, open('../binaries/random_forest.sav', 'wb'))\n",
+    "\n",
+    "classificador = MLPClassifier(max_iter = 1000,\n",
+    "                              tol = 0.000010,\n",
+    "                              solver='adam',\n",
+    "                              hidden_layer_sizes=(100),\n",
+    "                              activation = 'relu',\n",
+    "                              batch_size=200,\n",
+    "                              learning_rate_init=0.001)\n",
+    "classificador.fit(X_train, y_train)\n",
+    "pickle.dump(classificador, open('../binaries/RNA.sav', 'wb'))\n",
+    "\n",
+    "classificador = SVC(kernel = 'rbf', random_state = 1, C = 2.0, probability = True)\n",
+    "classificador.fit(X_train, y_train)\n",
+    "pickle.dump(classificador, open('../binaries/SVM.sav', 'wb'))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Pega o resultado mais frequente entre os modelos para melhorar a resposta"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 106,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "random_forest_clf = pickle.load(open('../binaries/random_forest.sav', 'rb'))\n",
+    "rna_clf = pickle.load(open('../binaries/RNA.sav', 'rb'))\n",
+    "svm_clf = pickle.load(open('../binaries/SVM.sav', 'rb'))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 82,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "resposta_svm = svm_clf.predict(X_test)\n",
+    "resposta_random_forest = random_forest_clf.predict(X_test)\n",
+    "resposta_rna = rna_clf.predict(X_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 97,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "resposta_final = np.zeros(len(resposta_svm))\n",
+    "\n",
+    "for i in range(len(resposta_svm)):\n",
+    "    arr = [resposta_svm[i], resposta_random_forest[i], resposta_rna[i]]\n",
+    "    counts = np.bincount(arr)\n",
+    "    resposta_final[i] = np.argmax(counts)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 103,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "SVM: 0.988\n",
+      "Random Forest: 0.984\n",
+      "RNA: 0.996\n",
+      "Final: 0.996\n"
+     ]
+    }
+   ],
+   "source": [
+    "print('SVM:', accuracy_score(y_test, resposta_svm))\n",
+    "print('Random Forest:', accuracy_score(y_test, resposta_random_forest))\n",
+    "print('RNA:', accuracy_score(y_test, resposta_rna))\n",
+    "print('Final:', accuracy_score(y_test, resposta_final))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Rejeição de classificadores\n",
+    "\n",
+    "Calcula a probabilidade de a predição estar certa, para definirmos um threshold manual de quão aceitável é o algoritmo errar. Muda dependendo do problema."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 110,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "probabilidade_svm = svm_clf.predict_proba(X_test)\n",
+    "probabilidade_rf = random_forest_clf.predict_proba(X_test)\n",
+    "probabilidade_rna = rna_clf.predict_proba(X_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 112,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "resposta_final = np.zeros(len(resposta_svm))\n",
+    "threshold = 0.98\n",
+    "\n",
+    "for i in range(len(resposta_svm)):\n",
+    "    arr = []\n",
+    "    if(probabilidade_svm[i].any() >= threshold):\n",
+    "        arr.append(resposta_svm[i])\n",
+    "    if(probabilidade_rf[i].any() >= threshold):\n",
+    "        arr.append(resposta_random_forest[i])\n",
+    "    if(probabilidade_rf[i].any() >= threshold):\n",
+    "        arr.append(resposta_rna[i])\n",
+    "    counts = np.bincount(arr)\n",
+    "    resposta_final[i] = np.argmax(counts)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 113,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "SVM: 0.988\n",
+      "Random Forest: 0.984\n",
+      "RNA: 0.996\n",
+      "Final: 0.996\n"
+     ]
+    }
+   ],
+   "source": [
+    "print('SVM:', accuracy_score(y_test, resposta_svm))\n",
+    "print('Random Forest:', accuracy_score(y_test, resposta_random_forest))\n",
+    "print('RNA:', accuracy_score(y_test, resposta_rna))\n",
+    "print('Final:', accuracy_score(y_test, resposta_final))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
